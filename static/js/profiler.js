@@ -344,7 +344,7 @@ var GaeMiniProfiler = {
         var fWasVisible = $(".g-m-p " + selector).is(":visible");
 
         $(".g-m-p .expand").removeClass("expanded");
-        $(".g-m-p .details:visible").slideUp(50)
+        $(".g-m-p .details:visible").slideUp(50);
 
         if (!fWasVisible) {
             $(elLink).parents(".expand").addClass("expanded");
@@ -365,7 +365,7 @@ var GaeMiniProfiler = {
 
     renderPopup: function(data) {
         if (data.logs) {
-            var counts = {}
+            var counts = {};
             $.each(data.logs, function(i, log) {
                 var c = counts[log[0]] || 0;
                 counts[log[0]] = c + 1;
