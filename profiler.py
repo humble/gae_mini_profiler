@@ -1,27 +1,22 @@
 import datetime
-import time
+import json
 import logging
 import os
 import pickle
 import re
-import simplejson
+import time
 import StringIO
 from types import GeneratorType
 import zlib
 
-from google.appengine.ext.webapp import template, RequestHandler
+from django.template import Context, loader
 from google.appengine.api import memcache
+from webapp2 import RequestHandler
 
-import unformatter
-from pprint import pformat
 import cleanup
 import cookies
+from pprint import pformat
 import unformatter
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from gae_mini_profiler.config import _config
 if os.environ["SERVER_SOFTWARE"].startswith("Devel"):
@@ -31,6 +26,7 @@ else:
 
 # request_id is a per-request identifier accessed by a couple other pieces of gae_mini_profiler
 request_id = None
+
 
 class SharedStatsHandler(RequestHandler):
 
@@ -43,10 +39,11 @@ class SharedStatsHandler(RequestHandler):
             return
 
         self.response.out.write(
-            template.render(path, {
+            loader.get_template(path).render(Context({
                 "request_id": request_id
-            })
+            }))
         )
+
 
 class RequestStatsHandler(RequestHandler):
 
@@ -80,7 +77,8 @@ class RequestStatsHandler(RequestHandler):
                     request_stats.disabled = True
                     request_stats.store()
 
-        self.response.out.write(simplejson.dumps(list_request_stats))
+        self.response.out.write(json.dumps(list_request_stats))
+
 
 class RequestStats(object):
 
@@ -303,10 +301,10 @@ class RequestStats(object):
 
         return None
 
+
 class ProfilerWSGIMiddleware(object):
 
     def __init__(self, app):
-        template.register_template_library('gae_mini_profiler.templatetags')
         self.app = app
         self.app_clean = app
         self.prof = None
@@ -339,7 +337,7 @@ class ProfilerWSGIMiddleware(object):
 
             # Send request id in headers so jQuery ajax calls can pick
             # up profiles.
-            def profiled_start_response(status, headers, exc_info = None):
+            def profiled_start_response(status, headers, exc_info=None):
 
                 if status.startswith("302 "):
                     # Temporary redirect. Add request identifier to redirect location
@@ -382,13 +380,14 @@ class ProfilerWSGIMiddleware(object):
 
                 # Turn on AppStats monitoring for this request
                 old_app = self.app
+
                 def wrapped_appstats_app(environ, start_response):
                     # Use this wrapper to grab the app stats recorder for RequestStats.save()
 
-                    if hasattr(recording.recorder, "get_for_current_request"):
-                        self.recorder = recording.recorder.get_for_current_request()
+                    if hasattr(recording.recorder_proxy, "get_for_current_request"):
+                        self.recorder = recording.recorder_proxy.get_for_current_request()
                     else:
-                        self.recorder = recording.recorder
+                        self.recorder = recording.recorder_proxy
 
                     return old_app(environ, start_response)
                 self.app = recording.appstats_wsgi_middleware(wrapped_appstats_app)
@@ -400,7 +399,7 @@ class ProfilerWSGIMiddleware(object):
                 # Get profiled wsgi result
                 result = self.prof.runcall(lambda *args, **kwargs: self.app(environ, profiled_start_response), None, None)
 
-                self.recorder = recording.recorder
+                self.recorder = recording.recorder_proxy
 
                 # If we're dealing w/ a generator, profile all of the .next calls as well
                 if type(result) == GeneratorType:
@@ -462,9 +461,9 @@ class ProfilerWSGIMiddleware(object):
             if "\t" in line:
                 fields = line.split("\t")
                 lines.append(fields)
-            else: # line is part of a multiline log message (prob a traceback)
+            else:  # line is part of a multiline log message (prob a traceback)
                 prevline = lines[-1][-1]
-                if prevline: # ignore leading blank lines in the message
+                if prevline:  # ignore leading blank lines in the message
                     prevline += "\n"
                 prevline += line
                 lines[-1][-1] = prevline
