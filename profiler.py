@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pickle
+from pprint import pformat
 import re
 import time
 import StringIO
@@ -15,7 +16,6 @@ from webapp2 import RequestHandler
 
 import cleanup
 import cookies
-from pprint import pformat
 import unformatter
 
 from gae_mini_profiler.config import _config
