@@ -37,24 +37,30 @@ You can play around with one of GAE's sample applications with gae_mini_profiler
         - url: /gae_mini_profiler/static
           static_dir: gae_mini_profiler/static
         - url: /gae_mini_profiler/.*
-          script: gae_mini_profiler/main.py
+          script: gae_mini_profiler.main.app
 
 3. Modify the WSGI application you want to profile by wrapping it with the gae_mini_profiler WSGI application. This is usually done in `appengine_config.py`:
 
-        import gaetk.gaesessions
-        gae_mini_profiler_ENABLED_PROFILER_EMAILS = ['m.dornseif@hudora.de']
+        from gaesessions import SessionMiddleware
+        # enable profiling for users authenticated with these emails
+        gae_mini_profiler_ENABLED_PROFILER_EMAILS = ['user1@example.com']
 
         def webapp_add_wsgi_middleware(app):
             """Called with each WSGI handler initialisation"""
-            app = gae_mini_profiler.profiler.ProfilerWSGIMiddleware(app)
+            app = profiler.ProfilerWSGIMiddleware(app)
             return app
 
 4. If you use Django Templates insert the `profiler_includes` template tag below jQuery somewhere (preferably at the end of your template):
 
                 ...your html...
-                {% profiler_includes %}
+                {# profiler output, only for authorized users #}
+                {% load profiler_includes %}{% profiler_includes %}
             </body>
         </html>
+
+    You should also add `gae_mini_profiler` to your `INSTALLED_APPS`. This is usually done in `django_settings.py`:
+
+        INSTALLED_APPS = ('gae_mini_profiler',)
 
     Alternatively you can hardcode the call on any other template system like jinja2:
 
@@ -64,11 +70,6 @@ You can play around with one of GAE's sample applications with gae_mini_profiler
 
     If you use the static inclusion you probably should use your template engine to include the code only
 for admins or other profiling-prone users.
-
-5. You're all set! Just choose the users for whom you'd like to enable profiling by putting the respective E-Mail addresses in `appengine_config.py`:
-
-            gae_mini_profiler_ENABLED_PROFILER_EMAILS = ['user1@example.com',
-                                                         'user2@example.com']
 
 For more sophisticated choice of what to profile check `gae_mini_profiler/config.py`.
 
