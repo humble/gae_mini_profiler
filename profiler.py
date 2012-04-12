@@ -399,6 +399,8 @@ class ProfilerWSGIMiddleware(object):
                 # Get profiled wsgi result
                 result = self.prof.runcall(lambda *args, **kwargs: self.app(environ, profiled_start_response), None, None)
 
+                # XXX: hack, wipe the lock so we can record more frequently
+                memcache.delete(recording.lock_key(), namespace=recording.config.KEY_NAMESPACE)
                 self.recorder = recording.recorder_proxy
 
                 # If we're dealing w/ a generator, profile all of the .next calls as well
