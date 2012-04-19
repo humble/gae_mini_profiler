@@ -1,8 +1,13 @@
 
 .g-m-p-corner {
-    padding: 4px;
+    padding: 4px 25px 4px 4px;
     cursor: pointer;
     text-align: right;
+}
+.g-m-p-close {
+    position: absolute;
+    right: 4px;
+    top: 4px;
 }
 
 .g-m-p-corner .ms,
