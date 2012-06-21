@@ -41,7 +41,7 @@ You can play around with one of GAE's sample applications with gae_mini_profiler
 
 3. Modify the WSGI application you want to profile by wrapping it with the gae_mini_profiler WSGI application. This is usually done in `appengine_config.py`:
 
-        from gaesessions import SessionMiddleware
+        import gae_mini_profiler.profiler
         # enable profiling for users authenticated with these emails
         gae_mini_profiler_ENABLED_PROFILER_EMAILS = ['user1@example.com']
 
