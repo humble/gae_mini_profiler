@@ -149,7 +149,7 @@ var GaeMiniProfiler = {
             if (!jCorner.data("attached")) {
                 $('body')
                     .append(jCorner)
-                    .click(function(e) { return GaeMiniProfiler.collapse(e); });
+                    .click(function(e) { return GaeMiniProfiler.collapse(); });
                 jCorner
                     .data("attached", true);
             }
@@ -214,9 +214,14 @@ var GaeMiniProfiler = {
                     requestLogData));
     },
 
-    collapse: function(e) {
+    collapse: function(remove) {
+        if (remove) {
+          var callback = function() { $('.g-m-p').remove() };
+        } else {
+          var callback = null;
+        }
         if ($(".g-m-p").is(":visible")) {
-            $(".g-m-p").slideUp("fast");
+            $(".g-m-p").slideUp("fast", callback);
             $(".g-m-p-corner").slideDown("fast")
                 .find(".expanded").removeClass("expanded");
             return false;
@@ -228,17 +233,24 @@ var GaeMiniProfiler = {
     expand: function(elEntry, data) {
         var jPopup = $(".g-m-p");
 
-        if (jPopup.length)
-            jPopup.remove();
+        if (jPopup.length) {
+            if ($(elEntry).data('request_id') === data.request_id && $(elEntry).hasClass('expanded')) {
+              this.collapse(true);
+              return;
+            }
+            else
+              jPopup.remove();
+        }
         else
-            $(document).keyup(function(e) { if (e.which == 27) GaeMiniProfiler.collapse() });
+            $(document).keyup(function(e) { if (e.which == 27) GaeMiniProfiler.collapse(true) });
 
         jPopup = this.renderPopup(data);
         $('body').append(jPopup);
 
         var jCorner = $(".g-m-p-corner");
         jCorner.find(".expanded").removeClass("expanded");
-        $(elEntry).addClass("expanded");
+        $(elEntry).addClass("expanded")
+                  .data("request_id", data.request_id);
 
         jPopup
             .find(".profile-link")
