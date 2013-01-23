@@ -29,7 +29,7 @@ var GaeMiniProfiler = {
 
         GaeMiniProfiler.fetch(requestId, window.location.search, fShowImmediately);
 
-        $('.g-m-p-close').live('click', function(e) {
+        $(document).on('click', '.g-m-p-close', function(e) {
             e.preventDefault();
             $(this).parent().fadeOut();
         });
